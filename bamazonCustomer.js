@@ -14,7 +14,7 @@ var connection = mysql.createConnection({
 
 connection.connect(function(err){
     if(err) throw(err)
-    console.log("Connection Established")
+    // console.log("Connection Established")
     start()
 });
 
@@ -31,3 +31,51 @@ function start(){
         }
     })
 }
+
+function purchasePrompt(){
+    inquirer.prompt([
+        {
+            name: "IDquery",
+            type: "input",
+            message: "Enter the ID of the Product You'd like to Purchase",
+            validate: function(value) {
+                if (isNaN(value) === false) {
+                  return true;
+                }
+                return false;
+              }
+        },
+        {
+            name: "quantity",
+            type: "input",
+            message: "How many would you like?",
+            validate: function(value){
+                if(isNaN(value)===false){
+                    return true;
+                }
+                return false;
+            }
+        }
+    ])
+    .then(function(answer){
+        var query = "SELECT id, price, stock_quantity FROM products WHERE ?";
+        connection.query(query, {id: answer.IDquery}, function(err, results){
+            var id = results[0].id
+            var price = results[0].price
+            var qoh = results[0].stock_quantity
+
+            if(parseInt(answer.quantity)>qoh){
+                console.log("Insufficient Quantity on Hand")
+                purchasePrompt()
+            } else{
+                var subQuery = "SELECT stock_quantity FROM products WHERE ? -" + answer.quantity
+                connection.query(subQuery, {id: id}, function(err, results){
+                    console.log(results[0])
+                }) 
+            }
+
+        })
+    })
+}
+
+purchasePrompt()
