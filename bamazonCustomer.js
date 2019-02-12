@@ -63,17 +63,22 @@ function purchasePrompt(){
             var id = results[0].id
             var price = results[0].price
             var qoh = results[0].stock_quantity
+            var orderTotal = price * answer.quantity
+
 
             if(parseInt(answer.quantity)>qoh){
                 console.log("Insufficient Quantity on Hand")
                 purchasePrompt()
             } else{
-                var subQuery = "SELECT stock_quantity FROM products WHERE ? -" + answer.quantity
-                connection.query(subQuery, {id: id}, function(err, results){
-                    console.log(results[0])
+                var subQuery = "UPDATE products SET ? WHERE ?"
+                var newTotal = qoh -= answer.quantity
+                connection.query(subQuery, [{stock_quantity : newTotal}, {id : answer.IDquery}], function(err, res){
+                    console.log("Quantity Remaining: " + newTotal)
+                    console.log("Order Total: $" + orderTotal)
                 }) 
             }
-
+            start()
+            purchasePrompt()
         })
     })
 }
